@@ -52,6 +52,8 @@ describe("util", function() {
     });
 
     it("copies all edges", function() {
+      g.setNode("a", {});
+      g.setNode("b", {});
       g.setEdge("a", "b", { foo: "bar" });
       g.setEdge("a", "b", { foo: "baz" }, "multi");
       var g2 = util.asNonCompoundGraph(g);

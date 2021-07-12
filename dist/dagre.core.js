@@ -311,6 +311,7 @@ function debugOrdering(g) {
 }
 
 },{"./graphlib":7,"./lodash":10,"./util":29}],7:[function(require,module,exports){
+// eslint-disable-next-line no-redeclare
 /* global window */
 
 var graphlib;
@@ -844,6 +845,7 @@ function canonicalize(attrs) {
 }
 
 },{"./acyclic":2,"./add-border-segments":3,"./coordinate-system":4,"./graphlib":7,"./lodash":10,"./nesting-graph":11,"./normalize":12,"./order":17,"./parent-dummy-chains":22,"./position":24,"./rank":26,"./util":29}],10:[function(require,module,exports){
+// eslint-disable-next-line no-redeclare
 /* global window */
 
 var lodash;
@@ -958,8 +960,10 @@ function dfs(g, root, nodeSep, weight, height, depths, v) {
   var bottom = util.addBorderNode(g, "_bb");
   var label = g.node(v);
 
+  g.node(top).height = label.height / 2 || 0;
   g.setParent(top, v);
   label.borderTop = top;
+  g.node(bottom).height = label.height / 2 || 0;
   g.setParent(bottom, v);
   label.borderBottom = bottom;
 
@@ -983,6 +987,12 @@ function dfs(g, root, nodeSep, weight, height, depths, v) {
       minlen: minlen,
       nestingEdge: true
     });
+  });
+
+  _.forEach(g.edges(), function (edge)  {
+    if(edge.v === v || edge.w === v) {
+      g.setEdge(edge.v === v ? bottom : edge.v, edge.w === v ? top : edge.w, g.edge(edge));
+    }
   });
 
   if (!g.parent(v)) {
@@ -1098,6 +1108,9 @@ function undo(g) {
     var node = g.node(v);
     var origLabel = node.edgeLabel;
     var w;
+    if (!g.node(node.edgeObj.v) || !g.node(node.edgeObj.w)) {
+      return;
+    }
     g.setEdge(node.edgeObj, origLabel);
     while (node.dummy) {
       w = g.successors(v)[0];
@@ -1456,7 +1469,9 @@ function initOrder(g) {
     visited[v] = true;
     var node = g.node(v);
     layers[node.rank].push(v);
-    _.forEach(g.successors(v), dfs);
+    _.forEach(_.filter(g.successors(v), function(s) {
+      return !g.children(s).length;
+    }), dfs);
   }
 
   var orderedVs = _.sortBy(simpleNodes, function(v) { return g.node(v).rank; });
@@ -2774,7 +2789,9 @@ function asNonCompoundGraph(g) {
     }
   });
   _.forEach(g.edges(), function(e) {
-    simplified.setEdge(e, g.edge(e));
+    if (simplified.node(e.v) && simplified.node(e.w)) {
+      simplified.setEdge(e, g.edge(e));
+    }
   });
   return simplified;
 }
@@ -2950,7 +2967,7 @@ function notime(name, fn) {
 }
 
 },{"./graphlib":7,"./lodash":10}],30:[function(require,module,exports){
-module.exports = "0.8.5";
+module.exports = "0.9.0";
 
 },{}]},{},[1])(1)
 });
